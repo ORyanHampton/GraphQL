@@ -54,7 +54,7 @@ func astFromValue(
 
         return try astFromValue(value: value, type: itemType)
     }
-    
+
     // Populate the fields of the input object by creating ASTs from each value
     // in the JavaScript object according to the fields in the input type.
     if let type = type as? GraphQLInputObjectType {
@@ -82,81 +82,57 @@ func astFromValue(
         return ObjectValue(fields: fieldASTs)
     }
 
-    print("found object outside type: \(type)")
-    
     guard let leafType = type as? GraphQLLeafType else {
         throw GraphQLError(
             message: "Expected scalar non-object type to be a leaf type: \(type)"
         )
     }
 
-    print("before serialized type: \(value.typeDescription)")
-    
     // Since value is an internally represented value, it must be serialized
     // to an externally represented value before converting into an AST.
     let serialized = try leafType.serialize(value: value)
 
-    print("serialized \(serialized)")
-    
     guard serialized != .null else {
         return nil
     }
-    
-    print("serializedValue: \(serialized)")
 
     // Others serialize based on their corresponding scalar types.
     if case let .number(number) = serialized {
-        
-        print("got in here")
-        print("number storageType: \(number.storageType)")
-        
         switch number.storageType {
         case .bool:
             return BooleanValue(value: number.boolValue)
         case .int:
-            print("seen as integer")
             return IntValue(value: String(number.intValue))
         case .double:
             return FloatValue(value: String(number.doubleValue))
         case .unknown:
-            print("seen as unknown")
             break
         }
     }
 
     if case let .string(string) = serialized {
-        print("here 1")
         // Enum types use Enum literals.
         if type is GraphQLEnumType {
             return EnumValue(value: string)
         }
 
-        print("here 2")
         // ID types can use Int literals.
         if type == GraphQLID, Int(string) != nil {
             return IntValue(value: string)
         }
 
-        print("here 3")
         // Use JSON stringify, which uses the same string encoding as GraphQL,
         // then remove the quotes.
         struct Wrapper: Encodable {
             let map: Map
         }
 
-        print("here 4")
         let data = try GraphQLJSONEncoder().encode(Wrapper(map: serialized))
-        
-        print("here 5")
         guard let string = String(data: data, encoding: .utf8) else {
             throw GraphQLError(
                 message: "Unable to convert data to utf8 string: \(data)"
             )
         }
-        
-        print("last step value: \(string)")
-        
-        print("here 6")
         return StringValue(value: String(string.dropFirst(8).dropLast(2)))
     }
 

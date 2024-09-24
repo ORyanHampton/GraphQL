@@ -369,18 +369,8 @@ let __InputValue = try! GraphQLObjectType(
                 else {
                     return nil
                 }
-                
-                print("output: \(defaultValue.description)")
-                
-                print("inputValue type: \(inputValue.type)")
-                
-                guard let valueAST = try astFromValue(value: defaultValue, type: inputValue.type) else {
-                    return nil
-                }
-                
-                return .string(print(ast: valueAST))
-//                    .string(
-//                return .string(defaultValue.description)
+
+                return .string(defaultValue.description)
             }
         ),
     ]
