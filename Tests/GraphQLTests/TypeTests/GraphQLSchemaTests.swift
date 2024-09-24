@@ -209,4 +209,17 @@ class GraphQLSchemaTests: XCTestCase {
             _ = try GraphQLSchema(query: query, types: [object1])
         )
     }
+    
+    func testNumberInvocation() throws {
+        let astTestInput = 2000
+        
+        var someType: GraphQLInputType = try GraphQLScalarType(
+            name: "Int",
+            serialize: { _ in .init(astTestInput) }
+        )
+        
+        let valueAST = try astFromValue(value: Map(astTestInput), type: someType)
+        
+        print(Map.string(print(ast: try XCTUnwrap(valueAST))))
+    }
 }
